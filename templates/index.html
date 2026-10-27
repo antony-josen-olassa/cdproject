@@ -1,104 +1,805 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Loop Statement Compiler</title>
+
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 900px;
-            margin: 40px auto;
-            padding: 20px;
-            background: #111827;
-            color: white;
+        :root {
+            --bg: #0b1020;
+            --panel: #131b2e;
+            --panel-dark: #080d19;
+            --border: #293752;
+            --text: #e5edf9;
+            --muted: #9aabc5;
+            --accent: #8ba7ff;
+            --green: #4ade80;
+            --red: #fb7185;
+            --orange: #fdba74;
+            --purple: #d8b4fe;
+            --yellow: #fde047;
         }
-        textarea {
-            width: 100%;
-            height: 260px;
+
+        * {
             box-sizing: border-box;
-            padding: 14px;
-            background: #1f2937;
-            color: #e5e7eb;
-            border: 1px solid #4b5563;
-            border-radius: 8px;
-            font-family: monospace;
-            font-size: 15px;
         }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        header {
+            padding: 30px 5%;
+            background: #10182a;
+            border-bottom: 1px solid var(--border);
+        }
+
+        header h1 {
+            margin: 0 0 10px;
+            font-size: clamp(25px, 4vw, 36px);
+        }
+
+        header p {
+            color: var(--muted);
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        main {
+            width: min(1450px, 94%);
+            margin: 28px auto 55px;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 22px;
+            margin-bottom: 22px;
+            min-width: 0;
+        }
+
+        .panel h2 {
+            margin: 0 0 14px;
+            font-size: 20px;
+        }
+
+        .hint {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        textarea {
+            display: block;
+            width: 100%;
+            min-height: 300px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--panel-dark);
+            color: #d9e6ff;
+            font: 14px/1.7 Consolas, Monaco, monospace;
+            resize: vertical;
+            outline: none;
+            tab-size: 4;
+        }
+
+        textarea:focus {
+            border-color: var(--accent);
+        }
+
         button {
-            margin: 12px 0;
-            padding: 12px 24px;
-            background: #2563eb;
-            color: white;
             border: 0;
-            border-radius: 6px;
+            border-radius: 8px;
+            padding: 11px 16px;
+            font-weight: 700;
             cursor: pointer;
         }
-        pre {
-            white-space: pre-wrap;
-            overflow-wrap: anywhere;
-            background: #1f2937;
+
+        button:hover {
+            filter: brightness(1.12);
+        }
+
+        .primary {
+            background: var(--accent);
+            color: #071024;
+        }
+
+        .secondary {
+            background: #26334d;
+            color: var(--text);
+        }
+
+        .actions, .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            margin: 18px 0;
+        }
+
+        .stat {
             padding: 16px;
-            border-radius: 8px;
+            background: var(--panel-dark);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+
+        .stat span {
+            display: block;
+            color: var(--muted);
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .stat strong {
+            font-size: 26px;
+        }
+
+        .success { color: var(--green); }
+        .failure { color: var(--red); }
+        .warning { color: var(--yellow); }
+        .muted { color: var(--muted); }
+
+        .notice {
+            padding: 14px 16px;
+            border-radius: 9px;
+            background: #122d25;
+            border: 1px solid #235c43;
+            color: #bbf7d0;
+            line-height: 1.6;
+        }
+
+        .error-notice {
+            background: #351721;
+            border-color: #7f293d;
+            color: #fecdd3;
+        }
+
+        .table-wrap {
+            overflow: auto;
+            max-height: 500px;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        th {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            background: #1b2740;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .token-type {
+            color: #a5b4fc;
+            font-weight: 700;
+        }
+
+        code, pre {
+            font-family: Consolas, Monaco, monospace;
+        }
+
+        /* Diagnostics */
+
+        .diagnostic {
+            padding: 15px;
+            margin-bottom: 12px;
+            background: var(--panel-dark);
+            border: 1px solid var(--border);
+            border-left: 4px solid #64748b;
+            border-radius: 9px;
+        }
+
+        .diagnostic:last-child {
+            margin-bottom: 0;
+        }
+
+        .diagnostic-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .diagnostic-category {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .diagnostic-location {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .diagnostic p {
+            margin: 12px 0 0;
+            line-height: 1.7;
+            overflow-wrap: anywhere;
+        }
+
+        .syntax-item { border-left-color: var(--red); }
+        .semantic-item { border-left-color: #fb923c; }
+        .lexical-item { border-left-color: #c084fc; }
+        .warning-item { border-left-color: var(--yellow); }
+        .note-item { border-left-color: #60a5fa; }
+
+        .syntax-label {
+            background: #4c1d27;
+            color: #fda4af;
+        }
+
+        .semantic-label {
+            background: #4a2b16;
+            color: var(--orange);
+        }
+
+        .lexical-label {
+            background: #3b2765;
+            color: var(--purple);
+        }
+
+        .warning-label {
+            background: #4b3a12;
+            color: var(--yellow);
+        }
+
+        .note-label {
+            background: #172e4a;
+            color: #93c5fd;
+        }
+
+        .other-label {
+            background: #26334d;
+            color: #cbd5e1;
+        }
+
+        .empty {
+            padding: 16px;
+            background: var(--panel-dark);
+            color: var(--muted);
+            border-radius: 9px;
+            line-height: 1.6;
+        }
+
+        /* AST graphical tree */
+
+        .ast-canvas {
+            min-height: 180px;
+            overflow: auto;
+            padding: 20px;
+            background: var(--panel-dark);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+
+        .tree, .tree ul {
+            list-style: none;
+            margin: 0;
+            padding-left: 28px;
+            position: relative;
+        }
+
+        .tree {
+            padding-left: 0;
+            display: inline-block;
+            min-width: 100%;
+        }
+
+        .tree ul::before {
+            content: "";
+            position: absolute;
+            left: 11px;
+            top: 0;
+            bottom: 18px;
+            border-left: 1px solid #52627f;
+        }
+
+        .tree li {
+            position: relative;
+            padding: 9px 0 0 23px;
+        }
+
+        .tree > li {
+            padding-left: 0;
+        }
+
+        .tree li:not(:first-child)::before {
+            content: "";
+            position: absolute;
+            left: 11px;
+            top: 23px;
+            width: 12px;
+            border-top: 1px solid #52627f;
+        }
+
+        .tree details > summary {
+            display: inline-block;
+            cursor: pointer;
+            list-style: none;
+        }
+
+        .tree details > summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .tree details > summary::before {
+            content: "▾ ";
+            color: var(--accent);
+        }
+
+        .tree details:not([open]) > summary::before {
+            content: "▸ ";
+        }
+
+        .node-card {
+            display: inline-flex;
+            flex-direction: column;
+            gap: 5px;
+            padding: 10px 13px;
+            border: 1px solid #526caa;
+            border-radius: 9px;
+            background: #172544;
+            min-width: 100px;
+            max-width: 340px;
+            overflow-wrap: anywhere;
+            vertical-align: top;
+        }
+
+        .node-name {
+            color: #c7d5ff;
+            font-weight: 800;
+        }
+
+        .node-field {
+            color: #a6b7d5;
+            font-size: 12px;
+        }
+
+        .node-detail {
+            color: #b8c6dd;
+            font-size: 12px;
+            font-family: Consolas, Monaco, monospace;
+        }
+
+        .tac-output {
+            margin: 0;
+            padding: 18px;
+            overflow: auto;
+            min-height: 100px;
+            background: var(--panel-dark);
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            color: #bbf7d0;
+            font: 14px/1.8 Consolas, Monaco, monospace;
+            white-space: pre;
+        }
+
+        footer {
+            padding: 20px;
+            color: var(--muted);
+            text-align: center;
+            font-size: 13px;
+        }
+
+        @media (max-width: 800px) {
+            .stats {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 500px) {
+            .panel {
+                padding: 15px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .ast-canvas {
+                padding: 12px;
+            }
+
+            .tree, .tree ul {
+                padding-left: 18px;
+            }
+
+            .node-card {
+                max-width: 240px;
+            }
         }
     </style>
 </head>
+
 <body>
+<header>
     <h1>Loop Statement Compiler</h1>
-    <p>Enter your C code below.</p>
+    <p>
+        Lexical Analysis · Syntax Analysis · Semantic Analysis ·
+        Abstract Syntax Tree · Three-Address Code
+    </p>
+</header>
 
-    <textarea id="code">int sum = 0;
+<main>
+    <!-- Source code input -->
+    <section class="panel">
+        <h2>Source Code Editor</h2>
 
-for (int i = 0; i < 5; i++) {
-    sum += i;
-}</textarea>
+        <p class="hint">
+            Enter a C program using supported constructs such as
+            for loops, while loops, do-while loops, declarations,
+            expressions, if statements, break and continue.
+        </p>
 
-    <br>
-    <button id="compile">Compile Code</button>
+        <form action="/compile" method="POST">
+            <textarea
+                id="source"
+                name="source"
+                spellcheck="false"
+                placeholder="Enter your C source code here..."
+            >{{ source }}</textarea>
 
-    <h2>Diagnostics</h2>
-    <pre id="diagnostics">Ready to compile.</pre>
+            <div class="actions">
+                <button class="primary" type="submit">
+                    Compile Program
+                </button>
 
-    <h2>Three-Address Code</h2>
-    <pre id="tac">No output yet.</pre>
+                <button
+                    class="secondary"
+                    type="button"
+                    onclick="loadExample()"
+                >
+                    Load Example
+                </button>
 
-    <script>
-        document.getElementById("compile").addEventListener("click", async () => {
-            const diagnostics = document.getElementById("diagnostics");
-            const tac = document.getElementById("tac");
+                <button
+                    class="secondary"
+                    type="button"
+                    onclick="clearCode()"
+                >
+                    Clear Code
+                </button>
+            </div>
+        </form>
+    </section>
 
-            diagnostics.textContent = "Compiling...";
-            tac.textContent = "";
+    {% if error_message %}
+        <section class="panel">
+            <div class="notice error-notice">
+                {{ error_message }}
+            </div>
+        </section>
+    {% endif %}
 
-            try {
-                const response = await fetch("/compile", {
-                    method: "POST",
-                    headers: {"Content-Type": "application/json"},
-                    body: JSON.stringify({
-                        code: document.getElementById("code").value
-                    })
-                });
+    {% if result %}
 
-                const result = await response.json();
+        <!-- Compilation summary -->
+        <section class="panel">
+            <h2>Compilation Summary</h2>
 
-                if (!response.ok) {
-                    throw new Error(result.error || "Compilation failed");
-                }
+            <div class="stats">
+                <div class="stat">
+                    <span>Tokens</span>
+                    <strong>{{ result.tokens|length }}</strong>
+                </div>
 
-                diagnostics.textContent =
-                    `Errors: ${result.errors}\nWarnings: ${result.warnings}\n\n` +
-                    (result.diagnostics.map(d =>
-                        `${d.line}:${d.column} [${d.level}] ${d.message}`
-                    ).join("\n") || "No diagnostics.");
+                <div class="stat">
+                    <span>Errors</span>
+                    <strong class="{{ 'success' if result.errors == 0 else 'failure' }}">
+                        {{ result.errors }}
+                    </strong>
+                </div>
 
-                tac.textContent = Array.isArray(result.tac)
-                    ? result.tac.join("\n")
-                    : String(result.tac ?? "");
-            } catch (error) {
-                diagnostics.textContent = error.message;
-            }
-        });
-    </script>
+                <div class="stat">
+                    <span>Warnings</span>
+                    <strong class="{{ 'warning' if result.warnings > 0 else '' }}">
+                        {{ result.warnings }}
+                    </strong>
+                </div>
+
+                <div class="stat">
+                    <span>Notes</span>
+                    <strong>{{ result.notes }}</strong>
+                </div>
+            </div>
+
+            {% if result.success %}
+                <div class="notice">
+                    Compilation succeeded. Three-address code was generated.
+                </div>
+            {% else %}
+                <div class="notice error-notice">
+                    Compilation was unsuccessful or did not generate TAC.
+                    Review the diagnostics below.
+                </div>
+            {% endif %}
+        </section>
+
+        <!-- Lexical analysis -->
+        <section class="panel">
+            <h2>1. Lexical Analysis — Token Table</h2>
+
+            <p class="hint">
+                Each row represents a token recognized by the lexical analyzer.
+                Line and column show its source position.
+            </p>
+
+            {% if result.tokens %}
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Token Type</th>
+                                <th>Token Value</th>
+                                <th>Line</th>
+                                <th>Column</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for token in result.tokens %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td class="token-type">{{ token.type }}</td>
+                                    <td><code>{{ token.value }}</code></td>
+                                    <td>{{ token.line }}</td>
+                                    <td>{{ token.column }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty">
+                    No tokens were produced.
+                </div>
+            {% endif %}
+        </section>
+
+        <!-- Diagnostics -->
+        <section class="panel">
+            <h2>2. Compiler Diagnostics</h2>
+
+            <p class="hint">
+                Diagnostics identify errors, warnings, and notes reported by
+                the compiler, along with their source locations.
+            </p>
+
+            {% if result.diagnostics %}
+                {% for item in result.diagnostics %}
+                    <div class="diagnostic
+                        {% if item.category == 'Syntax Error' %}
+                            syntax-item
+                        {% elif item.category == 'Semantic Error' %}
+                            semantic-item
+                        {% elif item.category == 'Lexical Error' %}
+                            lexical-item
+                        {% elif item.category == 'Warning' %}
+                            warning-item
+                        {% elif item.category == 'Note' %}
+                            note-item
+                        {% endif %}">
+
+                        <div class="diagnostic-heading">
+                            <span class="diagnostic-category
+                                {% if item.category == 'Syntax Error' %}
+                                    syntax-label
+                                {% elif item.category == 'Semantic Error' %}
+                                    semantic-label
+                                {% elif item.category == 'Lexical Error' %}
+                                    lexical-label
+                                {% elif item.category == 'Warning' %}
+                                    warning-label
+                                {% elif item.category == 'Note' %}
+                                    note-label
+                                {% else %}
+                                    other-label
+                                {% endif %}">
+                                {{ item.category }}
+                            </span>
+
+                            <span class="diagnostic-location">
+                                Line {{ item.line }},
+                                Column {{ item.column }}
+                            </span>
+                        </div>
+
+                        <p>{{ item.message }}</p>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="notice">
+                    No diagnostics were reported by the compiler.
+                </div>
+            {% endif %}
+        </section>
+
+        <!-- Abstract Syntax Tree -->
+        <section class="panel">
+            <h2>3. Abstract Syntax Tree (AST)</h2>
+
+            <p class="hint">
+                The tree visualizes the structure of the parsed program.
+                Expand or collapse nodes to inspect expressions,
+                statements, loops, and declaration details.
+            </p>
+
+            <div class="toolbar">
+                <button
+                    class="secondary"
+                    type="button"
+                    onclick="setAstOpen(true)"
+                >
+                    Expand All
+                </button>
+
+                <button
+                    class="secondary"
+                    type="button"
+                    onclick="setAstOpen(false)"
+                >
+                    Collapse All
+                </button>
+            </div>
+
+            <div class="ast-canvas">
+                {% if result.ast %}
+
+                    {% macro render_node(node) %}
+                        <li>
+                            {% if node.children %}
+                                <details open>
+                                    <summary>
+                                        <span class="node-card">
+                                            <span class="node-name">
+                                                {{ node.name }}
+                                            </span>
+
+                                            {% if node.field %}
+                                                <span class="node-field">
+                                                    Field: {{ node.field }}
+                                                </span>
+                                            {% endif %}
+
+                                            {% for detail in node.details %}
+                                                <span class="node-detail">
+                                                    {{ detail }}
+                                                </span>
+                                            {% endfor %}
+                                        </span>
+                                    </summary>
+
+                                    <ul>
+                                        {% for child in node.children %}
+                                            {{ render_node(child) }}
+                                        {% endfor %}
+                                    </ul>
+                                </details>
+                            {% else %}
+                                <span class="node-card">
+                                    <span class="node-name">
+                                        {{ node.name }}
+                                    </span>
+
+                                    {% if node.field %}
+                                        <span class="node-field">
+                                            Field: {{ node.field }}
+                                        </span>
+                                    {% endif %}
+
+                                    {% for detail in node.details %}
+                                        <span class="node-detail">
+                                            {{ detail }}
+                                        </span>
+                                    {% endfor %}
+                                </span>
+                            {% endif %}
+                        </li>
+                    {% endmacro %}
+
+                    <ul class="tree">
+                        {{ render_node(result.ast) }}
+                    </ul>
+
+                {% else %}
+                    <div class="empty">
+                        The compiler did not return an AST.
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- Three-address code -->
+        <section class="panel">
+            <h2>4. Three-Address Code (TAC)</h2>
+
+            <p class="hint">
+                This section displays the intermediate code generated
+                by the compiler when compilation succeeds.
+            </p>
+
+            {% if result.tac %}
+                <pre class="tac-output">{% for line in result.tac %}{{ line }}
+{% endfor %}</pre>
+            {% else %}
+                <div class="empty">
+                    TAC is unavailable because the compiler did not
+                    generate intermediate code.
+                </div>
+            {% endif %}
+        </section>
+
+    {% endif %}
+</main>
+
+<footer>
+    Loop Statement Compiler · Compiler Design Project
+</footer>
+
+<script>
+    function loadExample() {
+        document.getElementById("source").value =
+`int n = 5;
+int sum = 0;
+
+for (int i = 0; i < n; i++) {
+    sum = sum + i;
+}
+
+int j = 3;
+while (j > 0) {
+    j--;
+}
+
+int k = 0;
+do {
+    k++;
+} while (k < 2);`;
+    }
+
+    function clearCode() {
+        document.getElementById("source").value = "";
+    }
+
+    function setAstOpen(open) {
+        document.querySelectorAll(".ast-canvas details")
+            .forEach(function (node) {
+                node.open = open;
+            });
+    }
+</script>
 </body>
 </html>
